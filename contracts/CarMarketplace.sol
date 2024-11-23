@@ -17,14 +17,19 @@ contract CarMarketplace {
     uint256 public carCount=0;
     mapping (uint256=>Car) public cars;
 
-    //Car storage car = cars[carId];
-    //        require(msg.sender == car.owner, "Not the car owner");
-    //        require(!car.isForSale, "Car already listed");
-    //        car.price = price;
-    //        car.isForSale = true;
-    //        emit CarListedForSale(carId, price);
+    // Car storage car = cars[carId];
+    //        require(car.isForSale, "Car not for sale");
+    //        require(msg.value == car.price, "Incorrect price");
+    //
+    //        address seller = car.owner;
+    //        car.owner = msg.sender;
+    //        car.isForSale = false;
+    //        car.price = 0;
+    //
+    //        payable(seller).transfer(msg.value);
+    //        emit CarSold(carId, msg.sender, msg.value);
     event CarRegistered(uint256 indexed carId, address indexed owner, string make, string model);
-    event CarListedForSale
+    event CarListedForSale(uint256 indexed carId, uint256 price);
 
     function registerCar(string memory make, string memory model, uint16 year) public{
         carCount++;
@@ -37,7 +42,7 @@ contract CarMarketplace {
         require(!car.isForSale,"Car already listed");
         car.price=price;
         car.isForSale=true;
-
+        emit CarListedForSale(carId, price);
 
     }
 
