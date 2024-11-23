@@ -30,7 +30,7 @@ contract CarMarketplace {
     //        emit CarSold(carId, msg.sender, msg.value);
     event CarRegistered(uint256 indexed carId, address indexed owner, string make, string model);
     event CarListedForSale(uint256 indexed carId, uint256 price);
-
+    event CarSold(uint256 indexed carId, address indexed newOwner, uint256 price);
     function registerCar(string memory make, string memory model, uint16 year) public{
         carCount++;
         cars[carCount]=Car(carCount, make, model, year, msg.sender,0,false );
@@ -43,7 +43,19 @@ contract CarMarketplace {
         car.price=price;
         car.isForSale=true;
         emit CarListedForSale(carId, price);
+    }
+    function buyCar(uint256 carId) public payable{
+        Car storage car=cars[carId];
+        require(car.isForSale,"Car is currently not for sale");
+        require(msg.value==car.price,"Sorry could you try again incotrect for price  ");
 
+        address seller=car.owner;
+        car.owner= msg.sender;
+        car.isForSale = false;
+        car.price = 0;
+
+        payable(seller).transfer(msg.value);
+        emit CarSold(cardId, msg.sender, msg.value);
     }
 
 }
