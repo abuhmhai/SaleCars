@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.0;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -55,7 +55,10 @@ contract CarMarketplace {
         car.price = 0;
 
         payable(seller).transfer(msg.value);
-        emit CarSold(cardId, msg.sender, msg.value);
+        emit CarSold(carId, msg.sender, msg.value);
+    }
+    function getCarDetails(uint256 carId) public view returns( Car memory){
+        return cars[carId];
     }
 
 }
