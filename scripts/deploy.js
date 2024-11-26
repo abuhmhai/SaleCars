@@ -1,25 +1,20 @@
-// scripts/deploy.js
-
 const hre = require("hardhat");
 
 async function main() {
-    // Compile hợp đồng (tự động nếu chưa compile)
-    await hre.run('compile');
-
-    // Lấy contract factory
+    // Lấy Contract Factory
     const CarMarketplace = await hre.ethers.getContractFactory("CarMarketplace");
 
-    // Deploy hợp đồng
-    const marketplace = await CarMarketplace.deploy();
+    // Triển khai hợp đồng
+    const contract = await CarMarketplace.deploy();
 
-    // Chờ hoàn thành triển khai
-    await marketplace.deployed();
+    // Đợi hợp đồng triển khai xong
+    console.log("Deploying contract...");
+    await contract.waitForDeployment();
 
-    // In ra địa chỉ hợp đồng
-    console.log("CarMarketplace deployed to:", marketplace.address);
+    console.log("Contract deployed to:", await contract.getAddress());
 }
 
-// Xử lý lỗi nếu xảy ra
+// Gọi hàm main và xử lý lỗi
 main().catch((error) => {
     console.error(error);
     process.exitCode = 1;

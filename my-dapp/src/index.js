@@ -1,11 +1,7 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import "./index.css"; // Nếu chưa có, bạn có thể tạo tệp CSS trống
-import App from "./App";
+import React from 'react';
+import ReactDOM from 'react-dom/client'; // Lưu ý nhập từ 'react-dom/client'
 
-ReactDOM.render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>,
-    document.getElementById("root")
-);
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
