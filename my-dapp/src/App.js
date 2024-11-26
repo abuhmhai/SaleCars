@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ethers } from "ethers";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form, Card, Container, Alert } from 'react-bootstrap';
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Button, Form, Card, Container, Alert } from "react-bootstrap";
 
-const CONTRACT_ADDRESS = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"; // Địa chỉ hợp đồng của bạn
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Địa chỉ hợp đồng
 const LockABI = [
   {
     "anonymous": false,
@@ -263,8 +263,8 @@ function App() {
   const [carModel, setCarModel] = useState("");
   const [carYear, setCarYear] = useState("");
   const [carPrice, setCarPrice] = useState("");
-  const [message, setMessage] = useState(""); // Thông báo hiển thị
-  const [alertVariant, setAlertVariant] = useState("success"); // Loại thông báo (success, danger, v.v.)
+  const [message, setMessage] = useState(null);
+  const [messageType, setMessageType] = useState("info");
 
   const provider = useMemo(() => new ethers.providers.Web3Provider(window.ethereum), []);
   const signer = useMemo(() => provider.getSigner(), [provider]);
@@ -272,7 +272,8 @@ function App() {
   useEffect(() => {
     const init = async () => {
       if (!window.ethereum) {
-        alert("Please install MetaMask!");
+        setMessage("Please install MetaMask!");
+        setMessageType("danger");
         return;
       }
 
@@ -280,45 +281,42 @@ function App() {
         await provider.send("eth_requestAccounts", []);
         const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, LockABI, signer);
         setContract(contractInstance);
-
-        // Lấy số lượng xe ban đầu
         const count = await contractInstance.carCount();
         setCarCount(count.toNumber());
-
-        // Lắng nghe sự kiện "CarRegistered"
-        contractInstance.on("CarRegistered", () => {
-          updateCarCount();
-          showMessage("New car registered!", "success");
-        });
       } catch (error) {
         console.error("Error initializing:", error);
+        setMessage("Error initializing the contract.");
+        setMessageType("danger");
       }
     };
-
     init();
   }, [provider, signer]);
 
   const updateCarCount = async () => {
-    if (contract) {
+    if (!contract) return;
+    try {
       const count = await contract.carCount();
       setCarCount(count.toNumber());
+    } catch (error) {
+      console.error("Error fetching car count:", error);
     }
   };
 
-  const showMessage = (msg, variant = "success") => {
-    setMessage(msg);
-    setAlertVariant(variant);
-    setTimeout(() => setMessage(""), 3000); // Tự động ẩn sau 3 giây
+  const showMessage = (text, type = "info") => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => setMessage(null), 3000);
   };
 
   const handleRegisterCar = async () => {
     if (!contract) return;
     try {
-      await contract.registerCar(carMake, carModel, carYear);
+      await contract.registerCar(carMake, carModel, parseInt(carYear));
       showMessage("Car registered successfully!", "success");
+      updateCarCount();
     } catch (error) {
       console.error("Error registering car:", error);
-      showMessage("Failed to register car.", "danger");
+      showMessage("Error registering car.", "danger");
     }
   };
 
@@ -330,7 +328,7 @@ function App() {
       showMessage("Car listed for sale successfully!", "success");
     } catch (error) {
       console.error("Error listing car for sale:", error);
-      showMessage("Failed to list car for sale.", "danger");
+      showMessage("Error listing car for sale.", "danger");
     }
   };
 
@@ -341,9 +339,10 @@ function App() {
       const price = ethers.utils.parseEther(carPrice);
       await contract.buyCar(carId, { value: price });
       showMessage("Car bought successfully!", "success");
+      updateCarCount();
     } catch (error) {
       console.error("Error buying car:", error);
-      showMessage("Failed to buy car.", "danger");
+      showMessage("Error buying car.", "danger");
     }
   };
 
@@ -374,8 +373,7 @@ function App() {
       <Container className="my-4">
         <h1 className="text-center">Car Marketplace DApp</h1>
         <p className="text-center">Total Cars Registered: {carCount}</p>
-
-        {message && <Alert variant={alertVariant}>{message}</Alert>}
+        {message && <Alert variant={messageType}>{message}</Alert>}
 
         {/* Register Car Form */}
         <Card className="mb-4">
@@ -384,28 +382,126 @@ function App() {
             <Form>
               <Form.Group className="mb-3">
                 <Form.Label>Car Make</Form.Label>
-                <Form.Control type="text" placeholder="Enter car make" value={carMake} onChange={(e) => setCarMake(e.target.value)} />
+                <Form.Control
+                    type="text"
+                    placeholder="Enter car make"
+                    value={carMake}
+                    onChange={(e) => setCarMake(e.target.value)}
+                />
               </Form.Group>
-
               <Form.Group className="mb-3">
                 <Form.Label>Car Model</Form.Label>
-                <Form.Control type="text" placeholder="Enter car model" value={carModel} onChange={(e) => setCarModel(e.target.value)} />
+                <Form.Control
+                    type="text"
+                    placeholder="Enter car model"
+                    value={carModel}
+                    onChange={(e) => setCarModel(e.target.value)}
+                />
               </Form.Group>
-
               <Form.Group className="mb-3">
                 <Form.Label>Car Year</Form.Label>
-                <Form.Control type="number" placeholder="Enter car year" value={carYear} onChange={(e) => setCarYear(e.target.value)} />
+                <Form.Control
+                    type="number"
+                    placeholder="Enter car year"
+                    value={carYear}
+                    onChange={(e) => setCarYear(e.target.value)}
+                />
               </Form.Group>
-
-              <Button variant="primary" onClick={handleRegisterCar}>Register Car</Button>
+              <Button variant="primary" onClick={handleRegisterCar}>
+                Register Car
+              </Button>
             </Form>
           </Card.Body>
         </Card>
 
-        {/* Các phần khác giữ nguyên */}
         {/* List Car for Sale */}
+        <Card className="mb-4">
+          <Card.Header as="h5">List Car for Sale</Card.Header>
+          <Card.Body>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Car ID</Form.Label>
+                <Form.Control
+                    type="number"
+                    placeholder="Enter car ID"
+                    value={carId}
+                    onChange={(e) => setCarId(e.target.value)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Price (ETH)</Form.Label>
+                <Form.Control
+                    type="text"
+                    placeholder="Enter price in ETH"
+                    value={carPrice}
+                    onChange={(e) => setCarPrice(e.target.value)}
+                />
+              </Form.Group>
+              <Button variant="success" onClick={handleListForSale}>
+                List Car for Sale
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
+
         {/* Buy Car */}
+        <Card className="mb-4">
+          <Card.Header as="h5">Buy Car</Card.Header>
+          <Card.Body>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Car ID</Form.Label>
+                <Form.Control
+                    type="number"
+                    placeholder="Enter car ID to buy"
+                    value={carId}
+                    onChange={(e) => setCarId(e.target.value)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Price (ETH)</Form.Label>
+                <Form.Control
+                    type="text"
+                    placeholder="Enter price in ETH"
+                    value={carPrice}
+                    onChange={(e) => setCarPrice(e.target.value)}
+                />
+              </Form.Group>
+              <Button variant="warning" onClick={handleBuyCar}>
+                Buy Car
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
+
         {/* Car Details */}
+        <Card className="mb-4">
+          <Card.Header as="h5">Car Details</Card.Header>
+          <Card.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>Car ID</Form.Label>
+              <Form.Control
+                  type="number"
+                  placeholder="Enter car ID to view details"
+                  value={carId}
+                  onChange={(e) => setCarId(e.target.value)}
+              />
+            </Form.Group>
+            <Button variant="info" onClick={fetchCarDetails}>
+              Fetch Car Details
+            </Button>
+            {carDetails && (
+                <div className="mt-4">
+                  <p><strong>Make:</strong> {carDetails.make}</p>
+                  <p><strong>Model:</strong> {carDetails.model}</p>
+                  <p><strong>Year:</strong> {carDetails.year}</p>
+                  <p><strong>Owner:</strong> {carDetails.owner}</p>
+                  <p><strong>Price:</strong> {carDetails.price} ETH</p>
+                  <p><strong>For Sale:</strong> {carDetails.isForSale ? "Yes" : "No"}</p>
+                </div>
+            )}
+          </Card.Body>
+        </Card>
       </Container>
   );
 }
