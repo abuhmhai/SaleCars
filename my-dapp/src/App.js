@@ -370,11 +370,11 @@ function App() {
   };
 
   return (
+
       <Container className="my-4">
         <h1 className="text-center">Car Marketplace DApp</h1>
         <p className="text-center">Total Cars Registered: {carCount}</p>
         {message && <Alert variant={messageType}>{message}</Alert>}
-
         {/* Register Car Form */}
         <Card className="mb-4">
           <Card.Header as="h5">Register Car</Card.Header>
